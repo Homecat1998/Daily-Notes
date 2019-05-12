@@ -1,0 +1,29 @@
+在Ubuntu 16.04下配置TLP以延长电池续航的总结
+
+鉴于Windows系统对于电源续航的优化加强，以及Linux原本更多针对桌面机的设定，为了增强Ubuntu 16.04在笔记本上的使用体验，决定利用电源管理软件TLP进行电源优化。
+
+此乃TLP官网：https://linrunner.de/en/tlp/docs/tlp-linux-advanced-power-management.html
+安装使用标志性的“apt-get”进行，安全快捷。
+
+1，添加软件源目录，执行：
+sudo add-apt-repository ppa:linrunner/tlp
+sudo apt-get update
+
+2，安装，执行：
+sudo apt-get install tlp tlp-rdw
+
+对于Thinkpad机型，需要额外安装tp-smapi-dkms和acpi-call-dkms包，命令如下：
+sudo apt-get install tp-smapi-dkms acpi-call-dkms
+
+3，启用，执行：
+sudo tlp start
+检查工作状态：
+sudo tlp-stat -s
+
+4，手动配置TLP策略：
+TLP默认配置为绝大多数机型设定了最优方案，但仍然不妨根据自己的使用习惯和环境进行再一次优化。
+首先打开TLP配置文件：sudo gedit /etc/default/tlp
+若要使某项配置生效，删除此行前的comment符号即可。
+此次配置中，仅对电池充电阀值、默认开启无线设备以及电池模式下最大浏览器速度进行了手动配置。
+
+

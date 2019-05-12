@@ -1,0 +1,88 @@
+在EC2上安装LAMP(Linux-Apache-MySQL-PHP)服务器的心得。
+
+https://help.ubuntu.com/community/ApacheMySQLPHP
+
+利用apt-get更新软件包，安装lamp包。之后，使用apt-get安装apache2，命令如下：
+$ sudo apt-get install apache2
+
+随后终端出现：
+ubuntu@ip-172-31-34-65:~$ sudo apt-get install apache2
+Reading package lists... Done
+Building dependency tree       
+Reading state information... Done
+apache2 is already the newest version (2.4.29-1ubuntu4.6).
+The following packages were automatically installed and are no longer required:
+  debugedit libarchive13 libdw1 libnspr4 libnss3 librpm8 librpmbuild8
+  librpmio8 librpmsign8 libsqlite0 python-libxml2 python-lzma python-pycurl
+  python-rpm python-sqlite python-sqlitecachec python-urlgrabber rpm
+  rpm-common rpm2cpio
+Use 'sudo apt autoremove' to remove them.
+0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.
+
+出现此段文字表明apache2已是最新版本，此时可以使用autoremove删除不需要的包，命令如下：
+$ sudo apt-get autoremove
+
+等待清理完成。
+
+进入/etc/init.d 目录，找到apache2,重启，命令如下：
+$ sudo /etc/init.d/apache2 restart
+或
+$ sudo service apache2 restart
+
+出现OK表示重启成功。此时可以使用浏览器访问远程服务器80端口，应该可以看到Apache2的“It works”界面，表示配置成功。
+若访问失败，可以先检查防火墙是否开启80端口，命令：
+$ sudo ufw allow 80
+$ sudo ufw enable
+
+出现下文表示成功：
+ubuntu@ip-172-31-34-65:/etc/init.d$ sudo ufw allow 80
+Rule added
+Rule added (v6)
+ubuntu@ip-172-31-34-65:/etc/init.d$ sudo ufw enable
+Command may disrupt existing ssh connections. Proceed with operation (y|n)? y
+Firewall is active and enabled on system startup
+
+下面配置apache的虚拟主机。首先复制一份默认页面配置文件。
+$ sudo cp /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/mysite.conf 
+使用vi编辑器打开mysite.conf，更改root目录位置，例如/home/user/public_html/
+如果该位置没有文件夹和文件，可以创建一个新的，注意权限。
+
+完成上述动作之后，关闭旧页面，开启新页面，命令如下：
+$ sudo a2dissite 000-default && sudo a2ensite mysite
+应出现：
+Site 000-default disabled.
+To activate the new configuration, you need to run:
+  systemctl reload apache2
+Enabling site mysite.
+To activate the new configuration, you need to run:
+  systemctl reload apache2
+随后重启apache2服务。
+
+同样方法可以改回原设置。
+
+
+
+安装PHP5：
+此次配置中，所使用的EC2实例已经安装了php7，所以暂不作改动，仅检查php7与apache2的配合情况。
+
+测试PHP工作：
+在/var/www/html目录中，新建一个test.php，内容为：“<?php phpinfo(); ?>”
+在浏览器打开http://ip地址/test.php，注意一定要以http开头，否则apache不会被call
+
+
+安装mysql：
+$ sudo apt-get install mysql-server libapache2-mod-auth-mysql php7.2-mysql
+会发现“libapache2-mod-auth-mysql”包无法被定位，此乃已确认bug并且无修复计划，此包已经停止维护。
+
+“I get the impression that many people have ended up here because they want to install a LAMP stack, since some instructions somewhere state that this package should be installed to get a LAMP stack. This is incorrect. This package is only required for Apache authentication against MySQL (as opposed to doing it at the web app end, which is far more common). It appears to me that there are cargo culted instructions floating around the Internet.”
+
+有内容显示不需要此包依然可以在php中实现对mysql的操作。
+
+
+设置mysql：
+首先要为mysql设置密码，使用root帐号登入：
+$ sudo mysql -u root
+$ mysql> SET PASSWORD FOR 'root'@'localhost' = PASSWORD('yourpassword');
+应该出现：Query OK, 0 rows affected, 2 warnings (0.00 sec)
+
+至此，服务器基本配置设置完成。
